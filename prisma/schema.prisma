@@ -1,0 +1,521 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  termsAcceptedAt      DateTime?
+  id                   String               @id @default(cuid())
+  name                 String?
+  email                String               @unique
+  passwordHash         String
+  plan                 String               @default("free")
+  // 🩹 2026-09-01: apps com múltiplos papéis (jogador/dono, recepção/vet/admin…)
+  // faziam `prisma.user.findMany({ where: { role } })` e o build quebrava
+  // (TS2353: 'role' não existe em UserWhereInput). Agora a fundação tem o campo.
+  role                 String               @default("user")
+  stripeCustomerId     String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  projects             Project[]
+  event_seenBys        Event[]              @relation("EventSeenBy")
+  event_classifiedBys  Event[]              @relation("EventClassifiedBy")
+  event_discardedBys   Event[]              @relation("EventDiscardedBy")
+  incident_reportedBys Incident[]           @relation("IncidentReportedBy")
+  incident_assignedTos Incident[]           @relation("IncidentAssignedTo")
+  client               Client?              @relation("ClientUsers", fields: [clientId], references: [id])
+  clientId             String?
+  passwordResetTokens  PasswordResetToken[]
+  sessions             Session[]
+  siteOperators        SiteOperator[]
+  operator             Operator?
+  technician           Technician?
+  serviceOrders        ServiceOrder[]       @relation("ServiceOrderCreatedBy")
+  auditLogs            AuditLog[]
+  notifications        Notification[]
+  operatorId           String?
+  technicianId         String?
+
+  @@index([clientId])
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([ownerId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  ip        String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Client {
+  id           String   @id @default(cuid())
+  name         String
+  document     String? // CNPJ/CPF
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+  address      String?
+  city         String?
+  state        String?
+  zipCode      String?
+  status       String   @default("ativo") // ativo | suspenso | cancelado
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users          User[]          @relation("ClientUsers")
+  sites          Site[]
+  contracts      Contract[]
+  subscriptions  Subscription[]
+  incidents      Incident[]
+  serviceOrders  ServiceOrder[]
+  inventoryItems InventoryItem[]
+}
+
+model Site {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name      String
+  code      String? // identificador interno
+  address   String?
+  city      String?
+  state     String?
+  zipCode   String?
+  latitude  Float?
+  longitude Float?
+  timezone  String   @default("America/Sao_Paulo")
+  status    String   @default("ativo") // ativo | inativo | manutencao
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cameras        Camera[]
+  sensors        Sensor[]
+  events         Event[]
+  incidents      Incident[]
+  serviceOrders  ServiceOrder[]
+  inventoryItems InventoryItem[]
+  operators      SiteOperator[]
+  contracts      Contract[]
+
+  @@index([clientId])
+}
+
+model SiteOperator {
+  id          String   @id @default(cuid())
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grantedAt   DateTime @default(now())
+  grantedById String?
+
+  @@unique([siteId, userId])
+  @@index([siteId])
+  @@index([userId])
+}
+
+model Camera {
+  id              String    @id @default(cuid())
+  siteId          String
+  site            Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  name            String
+  code            String?
+  rtspUrl         String?
+  onvifUrl        String?
+  manufacturer    String?
+  model           String?
+  serialNumber    String?
+  resolution      String?
+  status          String    @default("online") // online | offline | degradada | manutencao
+  lastSeenAt      DateTime?
+  lastLatencyMs   Int?
+  healthStatus    String    @default("unknown") // unknown | ok | warn | fail
+  healthCheckedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  detectionRules       DetectionRule[]
+  events               Event[]
+  incidents            Incident[]
+  inventoryItem        InventoryItem?      @relation("CameraInventoryItem", fields: [inventoryItemId], references: [id])
+  healthChecks         CameraHealthCheck[]
+  inventoryItemId      String?
+  inventoryItem_camera InventoryItem[]     @relation("InventoryItemCamera")
+
+  @@index([siteId])
+}
+
+model CameraHealthCheck {
+  id        String   @id @default(cuid())
+  cameraId  String
+  camera    Camera   @relation(fields: [cameraId], references: [id], onDelete: Cascade)
+  status    String // online | offline | degradada
+  latencyMs Int?
+  message   String?
+  checkedAt DateTime @default(now())
+
+  @@index([cameraId])
+}
+
+model Sensor {
+  id           String    @id @default(cuid())
+  siteId       String
+  site         Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  name         String
+  type         String // movimento | porta | fumaca | temperatura | outro
+  serialNumber String?
+  status       String    @default("online") // online | offline | manutencao
+  lastSeenAt   DateTime?
+  metadata     Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  events                Event[]
+  inventoryItem         InventoryItem?  @relation("SensorInventoryItem", fields: [inventoryItemId], references: [id])
+  inventoryItemId       String?
+  inventoryItem_sensors InventoryItem[] @relation("InventoryItem_sensor")
+
+  @@index([siteId])
+  @@index([inventoryItemId])
+}
+
+model DetectionRule {
+  id              String   @id @default(cuid())
+  cameraId        String
+  camera          Camera   @relation(fields: [cameraId], references: [id], onDelete: Cascade)
+  name            String
+  enabled         Boolean  @default(true)
+  // zona em polígono/retângulo normalizado (JSON)
+  zone            Json?
+  // horário permitido (ex: "08:00-18:00" ou cron)
+  scheduleStart   String?
+  scheduleEnd     String?
+  daysOfWeek      String? // "1,2,3,4,5"
+  sensitivity     Float    @default(0.5)
+  objectClasses   String? // "pessoa,veiculo"
+  minConfidence   Float    @default(0.5)
+  cooldownSeconds Int      @default(30)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  events Event[]
+
+  @@index([cameraId])
+}
+
+model Event {
+  id              String         @id @default(cuid())
+  siteId          String
+  site            Site           @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  cameraId        String?
+  camera          Camera?        @relation(fields: [cameraId], references: [id])
+  sensorId        String?
+  sensor          Sensor?        @relation(fields: [sensorId], references: [id])
+  detectionRuleId String?
+  detectionRule   DetectionRule? @relation(fields: [detectionRuleId], references: [id])
+
+  occurredAt   DateTime @default(now())
+  snapshotUrl  String?
+  snapshotHash String?
+  motionScore  Float?
+  aiLabel      String? // pessoa | veiculo | objeto | desconhecido
+  aiConfidence Float?
+  aiRaw        Json?
+
+  status         String  @default("novo") // novo | em_analise | classificado | descartado | escalado
+  classification String? // pessoa | veiculo | objeto | desconhecido
+
+  seenById String?
+  seenBy   User?     @relation("EventSeenBy", fields: [seenById], references: [id])
+  seenAt   DateTime?
+
+  classifiedById String?
+  classifiedBy   User?     @relation("EventClassifiedBy", fields: [classifiedById], references: [id])
+  classifiedAt   DateTime?
+
+  discardedById String?
+  discardedBy   User?     @relation("EventDiscardedBy", fields: [discardedById], references: [id])
+  discardedAt   DateTime?
+  discardReason String?
+
+  incidentId String?
+  incident   Incident? @relation(fields: [incidentId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auditLogs AuditLog[]
+
+  @@index([siteId])
+  @@index([cameraId])
+  @@index([sensorId])
+  @@index([detectionRuleId])
+  @@index([seenById])
+  @@index([classifiedById])
+  @@index([discardedById])
+  @@index([incidentId])
+}
+
+model Incident {
+  id       String  @id @default(cuid())
+  clientId String
+  client   Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  siteId   String
+  site     Site    @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  cameraId String?
+  camera   Camera? @relation(fields: [cameraId], references: [id])
+
+  title       String
+  description String?
+  severity    String  @default("media") // baixa | media | alta | critica
+  status      String  @default("aberto") // aberto | em_analise | resolvido | arquivado
+
+  reportedById String?
+  reportedBy   User?   @relation("IncidentReportedBy", fields: [reportedById], references: [id])
+  assignedToId String?
+  assignedTo   User?   @relation("IncidentAssignedTo", fields: [assignedToId], references: [id])
+
+  snapshotUrl     String?
+  resolvedAt      DateTime?
+  resolutionNotes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events        Event[]
+  auditLogs     AuditLog[]
+  serviceOrders ServiceOrder[]
+
+  @@index([clientId])
+  @@index([siteId])
+  @@index([cameraId])
+  @@index([reportedById])
+  @@index([assignedToId])
+}
+
+model Operator {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shift     String? // manha | tarde | noite
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Technician {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone     String?
+  specialty String?
+  region    String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  serviceOrders ServiceOrder[]
+}
+
+model ServiceOrder {
+  id         String    @id @default(cuid())
+  code       String    @unique
+  clientId   String
+  client     Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  siteId     String
+  site       Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  incidentId String?
+  incident   Incident? @relation(fields: [incidentId], references: [id])
+
+  title       String
+  description String?
+  priority    String  @default("media") // baixa | media | alta | urgente
+  status      String  @default("aberta") // aberta | atribuida | em_rota | em_atendimento | concluida | cancelada
+
+  technicianId String?
+  technician   Technician? @relation(fields: [technicianId], references: [id])
+  createdById  String?
+  createdBy    User?       @relation("ServiceOrderCreatedBy", fields: [createdById], references: [id])
+
+  scheduledAt DateTime?
+  checkInAt   DateTime?
+  checkInLat  Float?
+  checkInLng  Float?
+  checkOutAt  DateTime?
+  completedAt DateTime?
+
+  photoBeforeUrl String?
+  photoAfterUrl  String?
+  signatureUrl   String?
+  signatureName  String?
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auditLogs AuditLog[]
+
+  @@index([clientId])
+  @@index([siteId])
+  @@index([incidentId])
+  @@index([technicianId])
+  @@index([createdById])
+}
+
+model InventoryItem {
+  id           String  @id @default(cuid())
+  serialNumber String  @unique
+  type         String // camera | sensor | dvr | nvr | outro
+  manufacturer String?
+  model        String?
+  status       String  @default("disponivel") // disponivel | instalado | manutencao | baixado
+  ownership    String  @default("comodato") // comodato | vendido
+
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id])
+  siteId   String?
+  site     Site?   @relation(fields: [siteId], references: [id])
+  cameraId String? @unique
+  camera   Camera? @relation("InventoryItemCamera", fields: [cameraId], references: [id])
+  sensorId String? @unique
+  sensor   Sensor? @relation("InventoryItem_sensor", fields: [sensorId], references: [id])
+
+  installedAt          DateTime?
+  removedAt            DateTime?
+  notes                String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  sensor_inventoryItem Sensor[]  @relation("SensorInventoryItem")
+  camera_inventoryItem Camera[]  @relation("CameraInventoryItem")
+
+  @@index([clientId])
+  @@index([siteId])
+}
+
+model Contract {
+  id       String  @id @default(cuid())
+  code     String  @unique
+  clientId String
+  client   Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  siteId   String?
+  site     Site?   @relation(fields: [siteId], references: [id])
+
+  title        String
+  description  String?
+  monthlyValue Decimal   @db.Decimal(10, 2)
+  billingCycle String    @default("mensal") // mensal | anual
+  startDate    DateTime
+  endDate      DateTime?
+  status       String    @default("ativo") // ativo | suspenso | encerrado
+  signedAt     DateTime?
+  documentUrl  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions Subscription[]
+
+  @@index([clientId])
+  @@index([siteId])
+}
+
+model Subscription {
+  id         String    @id @default(cuid())
+  clientId   String
+  client     Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  contractId String?
+  contract   Contract? @relation(fields: [contractId], references: [id])
+
+  plan         String // basico | profissional | enterprise
+  status       String  @default("ativa") // ativa | inadimplente | cancelada | trial
+  monthlyValue Decimal @db.Decimal(10, 2)
+  sitesCount   Int     @default(0)
+  camerasCount Int     @default(0)
+
+  currentPeriodStart   DateTime  @default(now())
+  currentPeriodEnd     DateTime?
+  canceledAt           DateTime?
+  stripeSubscriptionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([contractId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  actorRole  String?
+  action     String // view | classify | discard | escalate | create | update | delete | login | logout
+  entityType String // Event | Incident | ServiceOrder | Camera | Site | User | ...
+  entityId   String
+  before     Json?
+  after      Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  eventId        String?
+  event          Event?        @relation(fields: [eventId], references: [id])
+  incidentId     String?
+  incident       Incident?     @relation(fields: [incidentId], references: [id])
+  serviceOrderId String?
+  serviceOrder   ServiceOrder? @relation(fields: [serviceOrderId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([actorId])
+  @@index([eventId])
+  @@index([incidentId])
+  @@index([serviceOrderId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // evento_critico | incidente_escalado | os_atribuida | camera_offline | sistema
+  title     String
+  message   String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+  @@index([userId])
+}
