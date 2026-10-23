@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
@@ -98,7 +99,7 @@ export default async function OperacaoPage() {
               <CardTitle>Nenhum site liberado</CardTitle>
               <p className="mt-2 text-sm text-fg-muted">
                 Seu perfil de operador ainda não tem sites atribuídos. Peça ao administrador
-                para liberar o acesso em <span className="text-fg">Sites → Operadores</span>.
+                para liberar o acesso em <Link href="/sites" className="text-brand hover:underline">Sites</Link> (seção de operadores dentro de cada site).
               </p>
             </CardBody>
           </Card>
