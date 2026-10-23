@@ -3,13 +3,13 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 
-const HeroScene = dynamic(() => import('./hero-3d-scene'), { ssr: false, loading: () => <Orb /> });
+const HeroScene = dynamic(() => import('./hero-3d-scene'), { ssr: false, loading: () => <Fallback /> });
 
-function Orb() {
+function Fallback() {
   return (
     <div className="absolute inset-0 grid place-items-center">
-      <div className="h-3/5 w-3/5 rounded-full bg-brand/40 blur-3xl animate-pulse" />
-      <div className="absolute h-2/5 w-2/5 rounded-full bg-brand/60 blur-2xl" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo.png" alt="" className="w-3/5 drop-shadow-xl" />
     </div>
   );
 }
@@ -28,7 +28,7 @@ export function Hero3D() {
   return (
     <div className="relative aspect-square w-full max-w-[540px]">
       <div className="absolute inset-0 rounded-full bg-brand/20 blur-3xl" aria-hidden />
-      {render3d ? <HeroScene /> : <Orb />}
+      {render3d ? <HeroScene /> : <Fallback />}
     </div>
   );
 }
