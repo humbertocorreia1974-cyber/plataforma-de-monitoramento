@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 
-const LINKS = [{"href":"/operacao","label":"Operacao"},{"href":"/detection-rules","label":"Detection Rules"},{"href":"/motion-prefilter","label":"Motion Prefilter"},{"href":"/contratos","label":"Contratos"},{"href":"/estoque","label":"Estoque"}];
+const LINKS = [{"href":"/operacao","label":"Operação"},{"href":"/detection-rules","label":"Detection Rules"},{"href":"/motion-prefilter","label":"Motion Prefilter"},{"href":"/contratos","label":"Contratos"},{"href":"/estoque","label":"Estoque"}];
 const HIDE = [/^\/$/, /^\/login/, /^\/register/, /^\/redefinir-senha/, /^\/esqueci-senha/, /^\/recuperar/, /^\/termos/, /^\/privacidade/, /^\/cookies/, /^\/verificar/];
 
 export function AppNav() {

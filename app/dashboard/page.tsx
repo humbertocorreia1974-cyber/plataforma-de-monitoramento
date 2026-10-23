@@ -8,7 +8,7 @@ import { Card, CardTitle, CardBody } from "@/components/ui/card";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Painel · Plataforma de Monitoramento" };
 
-const ATALHOS = [{"href":"/operacao","label":"Operacao"},{"href":"/detection-rules","label":"Detection Rules"},{"href":"/motion-prefilter","label":"Motion Prefilter"},{"href":"/contratos","label":"Contratos"},{"href":"/estoque","label":"Estoque"}];
+const ATALHOS = [{"href":"/operacao","label":"Operação"},{"href":"/detection-rules","label":"Detection Rules"},{"href":"/motion-prefilter","label":"Motion Prefilter"},{"href":"/contratos","label":"Contratos"},{"href":"/estoque","label":"Estoque"}];
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);

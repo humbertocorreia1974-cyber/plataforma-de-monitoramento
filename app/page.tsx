@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Hero3D } from "@/components/hero-3d";
+import { ScanEye, Cpu, LayoutGrid, ShieldCheck, Building2, ActivitySquare } from "lucide-react";
 
-export const metadata = { title: "Plataforma de Monitoramento", description: "O VMS self-hosted da JGNEXT roda análise de vídeo em CPU sobre as câmeras que você já tem: pré-filtro de movimento, snapshot no evento e uma central de operação com fila em tempo real, classificação e escalada para incid", openGraph: { title: "Plataforma de Monitoramento", description: "O VMS self-hosted da JGNEXT roda análise de vídeo em CPU sobre as câmeras que você já tem: pré-filtro de movimento, snapshot no evento e uma central de operação com fila em tempo real, classificação e escalada para incid" } };
+const BULLET_ICONS = [ScanEye, Cpu, LayoutGrid, ShieldCheck, Building2, ActivitySquare];
+
+export const metadata = { title: "Plataforma de Monitoramento", description: "O VMS self-hosted da JGNEXT roda análise de vídeo em CPU sobre as câmeras que você já tem: pré-filtro de movimento, snapshot no evento e uma central de operação com fila em tempo real, classificação e escalada para incidente.", openGraph: { title: "Plataforma de Monitoramento", description: "O VMS self-hosted da JGNEXT roda análise de vídeo em CPU sobre as câmeras que você já tem: pré-filtro de movimento, snapshot no evento e uma central de operação com fila em tempo real, classificação e escalada para incidente." } };
 
 const BULLETS = ["Pré-filtro de movimento em CPU (OpenCV background subtraction) antes de qualquer inferência: só processa frame quando há movimento real, sem stream 24/7 pro servidor","Análise self-hosted via CodeProject.AI Server em Docker (CPU, sem GPU) com POST /v1/vision/detection sobre o snapshot capturado no evento","Central de operação multi-câmera com fila de eventos em tempo real (SSE/WebSocket) e workflow do operador: visualizar → classificar (pessoa/veículo/objeto/desconhecido) → descartar ou escalar para Incidente com severidade","Trilha de auditoria imutável em todo evento e incidente: quem viu, quem classificou, quem descartou, quando e de qual IP","Isolamento multi-tenant real por cliente/site — o operador só acessa os sites explicitamente liberados no perfil dele","Health-check de câmera (online/offline/latência) com alerta antes do cliente reclamar"];
 const STEPS = [{"n":"01","t":"Cadastre câmeras e sites","d":"Aponte as URLs RTSP das câmeras que você já tem — sem trocar hardware nem contratar novo NVR."},{"n":"02","t":"Rode o gateway na sua rede","d":"Um container Docker (CodeProject.AI + bridge) roda na sua LAN, filtra movimento por CPU e manda snapshot só quando há evento real."},{"n":"03","t":"Opere pela central","d":"Fila de eventos em tempo real: classifique pessoa/veículo/objeto, descarte ou escale para incidente com trilha de auditoria completa."}];
@@ -25,7 +28,7 @@ export default function Home() {
             Plataforma de Monitoramento
           </span>
           <h1 className="mt-5 text-[2.6rem] font-semibold leading-[1.04] tracking-tight sm:text-5xl lg:text-[3.4rem]">IA nas suas câmeras, sem trocar o hardware</h1>
-          <p className="mt-5 max-w-lg text-lg leading-relaxed text-fg-muted">O VMS self-hosted da JGNEXT roda análise de vídeo em CPU sobre as câmeras que você já tem: pré-filtro de movimento, snapshot no evento e uma central de operação com fila em tempo real, classificação e escalada para incid</p>
+          <p className="mt-5 max-w-lg text-lg leading-relaxed text-fg-muted">O VMS self-hosted da JGNEXT roda análise de vídeo em CPU sobre as câmeras que você já tem: pré-filtro de movimento, snapshot no evento e uma central de operação com fila em tempo real, classificação e escalada para incidente.</p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link href="/register" className="rounded-lg bg-brand px-5 py-2.5 font-medium text-brand-fg transition-opacity hover:opacity-90">Começar agora</Link>
             <Link href="/login" className="rounded-lg border border-border px-5 py-2.5 font-medium text-fg transition-colors hover:bg-surface">Já tenho conta</Link>
@@ -39,12 +42,17 @@ export default function Home() {
       {BULLETS.length > 0 && (
         <section className="mx-auto max-w-6xl px-5 py-14">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {BULLETS.map((b, i) => (
-              <div key={i} className="rounded-xl border border-border bg-surface/50 p-6 backdrop-blur transition-transform hover:-translate-y-0.5">
-                <div className="mb-3 h-8 w-8 rounded-lg bg-brand/15 ring-1 ring-brand/25" />
-                <p className="text-sm leading-relaxed text-fg">{b}</p>
-              </div>
-            ))}
+            {BULLETS.map((b, i) => {
+              const Icon = BULLET_ICONS[i % BULLET_ICONS.length];
+              return (
+                <div key={i} className="rounded-xl border border-border bg-surface/50 p-6 backdrop-blur transition-transform hover:-translate-y-0.5">
+                  <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-lg bg-brand/15 ring-1 ring-brand/25">
+                    <Icon className="h-4 w-4 text-brand" aria-hidden />
+                  </div>
+                  <p className="text-sm leading-relaxed text-fg">{b}</p>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
@@ -66,7 +74,7 @@ export default function Home() {
         <div className="relative overflow-hidden rounded-2xl border border-border bg-surface/60 px-8 py-14 text-center backdrop-blur">
           <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(30rem_20rem_at_50%_0%,hsl(var(--brand)/0.18),transparent_70%)]" />
           <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Comece agora</h2>
-          <p className="mx-auto mt-2 max-w-md text-fg-muted">O VMS self-hosted da JGNEXT roda análise de vídeo em CPU sobre as câmeras que você já tem: pré-filtro de movimento, snapshot no evento e uma central de operação com fila em tempo real, classificação e escalada para incid</p>
+          <p className="mx-auto mt-2 max-w-md text-fg-muted">O VMS self-hosted da JGNEXT roda análise de vídeo em CPU sobre as câmeras que você já tem: pré-filtro de movimento, snapshot no evento e uma central de operação com fila em tempo real, classificação e escalada para incidente.</p>
           <Link href="/register" className="mt-6 inline-flex rounded-lg bg-brand px-6 py-3 font-medium text-brand-fg transition-opacity hover:opacity-90">Começar agora</Link>
         </div>
       </section>
