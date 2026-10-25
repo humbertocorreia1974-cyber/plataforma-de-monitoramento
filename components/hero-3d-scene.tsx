@@ -1,100 +1,60 @@
 'use client';
 
-import { Component, Suspense, useRef } from 'react';
-import { Canvas, useFrame, useLoader } from '@react-three/fiber';
+import { useRef } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 function brandColor() {
   try {
     const v = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim();
-    return v ? new THREE.Color(`hsl(${v.replace(/\s+/g, ', ')})`) : new THREE.Color('#12314f');
+    return v ? new THREE.Color(`hsl(${v.replace(/\s+/g, ', ')})`) : new THREE.Color('#6366f1');
   } catch {
-    return new THREE.Color('#12314f');
+    return new THREE.Color('#6366f1');
   }
 }
 
-function Medallion() {
-  const g = useRef(null);
+// cluster de 2 poliedros facetados, girando em velocidades
+// diferentes - precisao/tecnologia, sem depender de nenhuma
+// textura (nunca falha por logo ausente).
+function FacetCluster() {
+  const outer = useRef(null);
+  const inner = useRef(null);
   const color = useRef(brandColor());
-  const tex = useLoader(THREE.TextureLoader, '/logo.png');
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 8;
-  useFrame((state) => {
-    const m = g.current;
-    if (!m) return;
-    const t = state.clock.elapsedTime;
-    m.rotation.y = Math.sin(t * 0.5) * 0.5;
-    m.rotation.x = -0.12 + Math.sin(t * 0.33) * 0.09;
-    m.position.y = Math.sin(t * 0.8) * 0.06;
+  useFrame((state, delta) => {
+    if (outer.current) {
+      outer.current.rotation.y += delta * 0.14;
+      outer.current.rotation.x += delta * 0.05;
+    }
+    if (inner.current) {
+      inner.current.rotation.y -= delta * 0.22;
+      inner.current.rotation.z += delta * 0.08;
+    }
   });
   return (
-    <group ref={g} scale={1.4}>
-      <mesh rotation={[Math.PI / 2, 0, 0]} castShadow>
-        <cylinderGeometry args={[1, 1, 0.16, 96]} />
-        <meshStandardMaterial color={color.current} metalness={0.35} roughness={0.55} />
+    <group>
+      <mesh ref={outer} scale={1.55}>
+        <icosahedronGeometry args={[1, 1]} />
+        <meshStandardMaterial color={color.current} roughness={0.25} metalness={0.55} flatShading transparent opacity={0.88} />
       </mesh>
-      <mesh position={[0, 0, 0.02]}>
-        <torusGeometry args={[0.99, 0.04, 16, 96]} />
-        <meshStandardMaterial color="#eef3f7" metalness={0.2} roughness={0.4} />
-      </mesh>
-      <mesh position={[0, 0, 0.081]}>
-        <circleGeometry args={[0.9, 96]} />
-        <meshBasicMaterial color="#ffffff" />
-      </mesh>
-      <mesh position={[0, 0, 0.083]}>
-        <circleGeometry args={[0.86, 96]} />
-        <meshBasicMaterial map={tex} transparent />
+      <mesh ref={inner} scale={0.78}>
+        <octahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial color="#ffffff" roughness={0.1} metalness={0.3} flatShading />
       </mesh>
     </group>
   );
 }
 
-function PlainShape() {
-  const mesh = useRef(null);
-  const color = useRef(brandColor());
-  useFrame((state, delta) => {
-    const m = mesh.current;
-    if (!m) return;
-    m.rotation.y += delta * 0.16;
-    m.rotation.z += delta * 0.04;
-  });
-  return (
-    <mesh ref={mesh} scale={1.75}>
-      <icosahedronGeometry args={[1, 2]} />
-      <meshStandardMaterial color={color.current} roughness={0.2} metalness={0.65} flatShading />
-    </mesh>
-  );
-}
-
-class HeroErrorBoundary extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false };
-  }
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-  render() {
-    if (this.state.hasError) return this.props.fallback;
-    return this.props.children;
-  }
-}
-
 export default function HeroScene() {
   return (
     <Canvas
-      camera={{ position: [0, 0, 5], fov: 40 }}
+      camera={{ position: [0, 0, 5], fov: 42 }}
       dpr={[1, 2]}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
     >
-      <ambientLight intensity={0.9} />
-      <directionalLight position={[3, 5, 6]} intensity={1.3} />
-      <directionalLight position={[-4, -2, 2]} intensity={0.4} color="#bfe6fb" />
-      <HeroErrorBoundary fallback={<PlainShape />}>
-        <Suspense fallback={null}>
-          <Medallion />
-        </Suspense>
-      </HeroErrorBoundary>
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[4, 4, 5]} intensity={1.5} />
+      <pointLight position={[-5, -3, -2]} intensity={1} color="#ffffff" />
+      <FacetCluster />
     </Canvas>
   );
 }
