@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { sendPushToUser } from "@/lib/webpush";
 
 export async function notifyUser(params: {
   userId: string;
@@ -18,6 +19,15 @@ export async function notifyUser(params: {
       link: params.link ?? null,
     },
   });
+
+  // Push real no navegador (Web Push/VAPID) — complementa o e-mail, não
+  // substitui. Best-effort: nunca bloqueia nem derruba o fluxo de notificação.
+  sendPushToUser(params.userId, {
+    title: params.title,
+    body: params.message,
+    url: params.link,
+  }).catch((e) => console.error("notify push failed", e));
+
   if (params.email) {
     try {
       const user = await prisma.user.findUnique({ where: { id: params.userId } });

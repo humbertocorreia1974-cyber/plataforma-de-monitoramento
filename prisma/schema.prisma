@@ -37,6 +37,7 @@ model User {
   serviceOrders        ServiceOrder[]       @relation("ServiceOrderCreatedBy")
   auditLogs            AuditLog[]
   notifications        Notification[]
+  pushSubscriptions    PushSubscription[]
   operatorId           String?
   technicianId         String?
 
@@ -517,5 +518,18 @@ model Notification {
   createdAt DateTime  @default(now())
 
   @@index([userId, readAt])
+  @@index([userId])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
   @@index([userId])
 }

@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Card, CardTitle, CardBody } from '@/components/ui/card';
 import { FilaClient } from './fila-client';
+import { PushNotificationsToggle } from '@/components/push-notifications-toggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,10 +88,13 @@ export default async function OperacaoPage() {
               Fila de eventos em tempo real · {sites.length} site(s) liberado(s) para você
             </p>
           </div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-fg-muted">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" aria-hidden />
-            SSE conectado
-          </span>
+          <div className="flex items-center gap-2">
+            <PushNotificationsToggle />
+            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-fg-muted">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" aria-hidden />
+              SSE conectado
+            </span>
+          </div>
         </header>
 
         {sites.length === 0 ? (

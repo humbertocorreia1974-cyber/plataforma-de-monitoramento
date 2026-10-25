@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { sendEmail } from '@/lib/email';
+import { sendPushToUsers } from '@/lib/webpush';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,7 +99,7 @@ export async function POST(
   // Alerta por e-mail para os operadores com acesso a este Site (SiteOperator)
   const siteOperators = await prisma.siteOperator.findMany({
     where: { siteId: ev.siteId },
-    select: { user: { select: { email: true, name: true } } },
+    select: { userId: true, user: { select: { email: true, name: true } } },
   });
   const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const operacaoLink = `${appUrl}/operacao`;
@@ -119,6 +120,18 @@ export async function POST(
         })
       )
   );
+
+  // Push real no navegador (Web Push/VAPID) para os mesmos destinatários do
+  // e-mail (operadores do site) + admins já notificados acima. Complementa o
+  // e-mail, não substitui. SMS (Twilio) fica para depois — ver TODO em lib/webpush.ts.
+  const pushUserIds = Array.from(
+    new Set([...siteOperators.map((so) => so.userId), ...admins.map((a) => a.id)])
+  );
+  sendPushToUsers(pushUserIds, {
+    title: `Incidente ${severity.toUpperCase()} — ${ev.site.name}`,
+    body: title,
+    url: `/incidentes/${incident.id}`,
+  }).catch((e) => console.error('escalate push failed', e));
 
   return NextResponse.json({ ok: true, event: updated, incident });
 }
