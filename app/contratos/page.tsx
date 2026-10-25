@@ -36,7 +36,7 @@ export default async function ContratosPage({
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/login");
   const role = session.user.role;
-  if (role !== "admin" && role !== "cliente") redirect("/");
+  if (role !== "admin" && role !== "cliente") redirect("/sem-permissao");
 
   const sp = await searchParams;
   const where: Record<string, unknown> = {};

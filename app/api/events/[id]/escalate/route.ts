@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { sendEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -93,6 +94,31 @@ export async function POST(
       })),
     });
   }
+
+  // Alerta por e-mail para os operadores com acesso a este Site (SiteOperator)
+  const siteOperators = await prisma.siteOperator.findMany({
+    where: { siteId: ev.siteId },
+    select: { user: { select: { email: true, name: true } } },
+  });
+  const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const operacaoLink = `${appUrl}/operacao`;
+  await Promise.all(
+    siteOperators
+      .filter((so) => !!so.user.email)
+      .map((so) =>
+        sendEmail({
+          to: so.user.email as string,
+          subject: `Incidente ${severity.toUpperCase()} escalado — ${ev.site.name}`,
+          html: `
+            <p>Um incidente foi escalado no site <strong>${ev.site.name}</strong>.</p>
+            <p><strong>${title}</strong></p>
+            ${description ? `<p>${description}</p>` : ''}
+            <p>Severidade: <strong>${severity}</strong></p>
+            <p><a href="${operacaoLink}">Abrir a Central de Operação</a></p>
+          `,
+        })
+      )
+  );
 
   return NextResponse.json({ ok: true, event: updated, incident });
 }

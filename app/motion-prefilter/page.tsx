@@ -24,7 +24,7 @@ export default async function MotionPrefilterPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/login");
   const role = (session.user as any).role as string | undefined;
-  if (role !== "admin" && role !== "operador") redirect("/");
+  if (role !== "admin" && role !== "operador") redirect("/sem-permissao");
 
   const cameras = await prisma.camera.findMany({
     where: { status: { not: "offline" } },

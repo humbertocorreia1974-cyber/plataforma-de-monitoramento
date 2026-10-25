@@ -25,7 +25,7 @@ export default async function EstoquePage({ searchParams }: { searchParams: SP }
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect('/login');
   const role = (session.user as any).role as string;
-  if (!['admin', 'operador'].includes(role)) redirect('/');
+  if (!['admin', 'operador'].includes(role)) redirect('/sem-permissao');
 
   const where: any = {};
   if (searchParams.q) {
@@ -129,7 +129,7 @@ export default async function EstoquePage({ searchParams }: { searchParams: SP }
       ) : (
         <Card>
           <CardBody className="overflow-x-auto p-0">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[900px] text-sm">
               <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-fg-muted">
                 <tr>
                   <th className="px-4 py-3">Serial</th>

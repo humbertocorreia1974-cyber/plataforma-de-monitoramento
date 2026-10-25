@@ -25,7 +25,7 @@ export default async function OperacaoPage() {
   if (!session?.user) redirect('/login');
 
   const role = (session.user as { role?: string }).role ?? 'user';
-  if (!['operador', 'admin'].includes(role)) redirect('/');
+  if (!['operador', 'admin'].includes(role)) redirect('/sem-permissao');
 
   const userId = session.user.id;
 

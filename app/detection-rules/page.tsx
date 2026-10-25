@@ -27,7 +27,7 @@ export default async function DetectionRulesPage({
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect("/login");
   const role = (session.user as { role?: string }).role ?? "user";
-  if (role !== "admin" && role !== "operador") redirect("/operacao");
+  if (role !== "admin" && role !== "operador") redirect("/sem-permissao");
 
   const { cameraId } = await searchParams;
 
