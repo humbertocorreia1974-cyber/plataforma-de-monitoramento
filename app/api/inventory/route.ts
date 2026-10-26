@@ -32,7 +32,10 @@ export async function POST(request: Request) {
   if (!['admin', 'operador'].includes(role)) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
 
   const body = await request.json();
-  const { serialNumber, type, manufacturer, model, status, ownership, clientId, siteId, notes } = body ?? {};
+  const {
+    serialNumber, type, manufacturer, model, status, ownership, clientId, siteId, notes,
+    purchaseDate, purchaseCost, warrantyExpiresAt,
+  } = body ?? {};
   if (!serialNumber || !type) return NextResponse.json({ error: 'serialNumber e type são obrigatórios' }, { status: 400 });
 
   const exists = await prisma.inventoryItem.findUnique({ where: { serialNumber } });
@@ -50,8 +53,22 @@ export async function POST(request: Request) {
       siteId: siteId || null,
       notes: notes || null,
       installedAt: status === 'instalado' ? new Date() : null,
+      purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
+      purchaseCost: purchaseCost === '' || purchaseCost == null ? null : purchaseCost,
+      warrantyExpiresAt: warrantyExpiresAt ? new Date(warrantyExpiresAt) : null,
     },
   });
+
+  if (created.clientId || created.siteId) {
+    await prisma.inventoryItemAssignment.create({
+      data: {
+        inventoryItemId: created.id,
+        clientId: created.clientId,
+        siteId: created.siteId,
+        reason: 'cadastro inicial',
+      },
+    });
+  }
 
   await prisma.auditLog.create({
     data: {

@@ -38,6 +38,7 @@ model User {
   auditLogs            AuditLog[]
   notifications        Notification[]
   pushSubscriptions    PushSubscription[]
+  inventoryMaintenances InventoryItemMaintenance[] @relation("InventoryMaintenancePerformedBy")
   operatorId           String?
   technicianId         String?
 
@@ -102,6 +103,7 @@ model Client {
   incidents      Incident[]
   serviceOrders  ServiceOrder[]
   inventoryItems InventoryItem[]
+  inventoryItemAssignments InventoryItemAssignment[]
 }
 
 model Site {
@@ -127,6 +129,7 @@ model Site {
   incidents      Incident[]
   serviceOrders  ServiceOrder[]
   inventoryItems InventoryItem[]
+  inventoryItemAssignments InventoryItemAssignment[]
   operators      SiteOperator[]
   contracts      Contract[]
 
@@ -413,16 +416,55 @@ model InventoryItem {
   sensorId String? @unique
   sensor   Sensor? @relation("InventoryItem_sensor", fields: [sensorId], references: [id])
 
+  // Estado atual (mantido por compatibilidade com telas existentes). A fonte
+  // de verdade para o historico de custodia e InventoryItemAssignment abaixo.
   installedAt          DateTime?
   removedAt            DateTime?
+  purchaseDate         DateTime?
+  purchaseCost         Decimal?  @db.Decimal(10, 2)
+  warrantyExpiresAt    DateTime?
   notes                String?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   sensor_inventoryItem Sensor[]  @relation("SensorInventoryItem")
   camera_inventoryItem Camera[]  @relation("CameraInventoryItem")
+  assignments          InventoryItemAssignment[]
+  maintenances         InventoryItemMaintenance[]
 
   @@index([clientId])
   @@index([siteId])
+}
+
+model InventoryItemAssignment {
+  id              String    @id @default(cuid())
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  clientId        String?
+  client          Client?   @relation(fields: [clientId], references: [id])
+  siteId          String?
+  site            Site?     @relation(fields: [siteId], references: [id])
+  assignedAt      DateTime  @default(now())
+  unassignedAt    DateTime?
+  reason          String?
+  createdAt       DateTime  @default(now())
+
+  @@index([inventoryItemId])
+  @@index([clientId])
+  @@index([siteId])
+}
+
+model InventoryItemMaintenance {
+  id              String    @id @default(cuid())
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  performedAt     DateTime  @default(now())
+  description     String
+  cost            Decimal?  @db.Decimal(10, 2)
+  performedById   String?
+  performedBy     User?     @relation("InventoryMaintenancePerformedBy", fields: [performedById], references: [id])
+  createdAt       DateTime  @default(now())
+
+  @@index([inventoryItemId])
 }
 
 model Contract {
@@ -447,9 +489,25 @@ model Contract {
   updatedAt DateTime @updatedAt
 
   subscriptions Subscription[]
+  signatures    ContractSignature[]
 
   @@index([clientId])
   @@index([siteId])
+}
+
+model ContractSignature {
+  id             String   @id @default(cuid())
+  contractId     String
+  contract       Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  signerName     String
+  signerDocument String?
+  signatureData  String // base64/SVG do desenho da assinatura
+  signedAt       DateTime @default(now())
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  @@index([contractId])
 }
 
 model Subscription {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
@@ -154,6 +155,7 @@ export default async function ContratosPage({
                     <th className="py-2 pr-3">Mensalidade</th>
                     <th className="py-2 pr-3">Assinatura</th>
                     <th className="py-2 pr-3">Status</th>
+                    <th className="py-2 pr-3">Assinatura digital</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -185,6 +187,11 @@ export default async function ContratosPage({
                               {STATUS_LABEL[c.status] ?? c.status}
                             </span>
                           )}
+                        </td>
+                        <td className="py-3 pr-3">
+                          <Link href={`/contratos/${c.id}`} className="text-xs text-brand hover:underline">
+                            {c.signedAt ? `assinado em ${new Date(c.signedAt).toLocaleDateString("pt-BR")}` : "assinar contrato"}
+                          </Link>
                         </td>
                       </tr>
                     );

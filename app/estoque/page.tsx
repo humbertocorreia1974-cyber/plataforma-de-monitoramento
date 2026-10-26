@@ -138,13 +138,16 @@ export default async function EstoquePage({ searchParams }: { searchParams: SP }
                   <th className="px-4 py-3">Propriedade</th>
                   <th className="px-4 py-3">Cliente / Site</th>
                   <th className="px-4 py-3">Vínculo</th>
+                  <th className="px-4 py-3">Garantia</th>
                   <th className="px-4 py-3 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((it) => (
                   <tr key={it.id} className="border-b border-border/60 transition-colors duration-150 hover:bg-white/5">
-                    <td className="px-4 py-3 font-mono text-xs text-fg">{it.serialNumber}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-fg">
+                      <Link href={`/estoque/${it.id}`} className="hover:text-brand hover:underline">{it.serialNumber}</Link>
+                    </td>
                     <td className="px-4 py-3">
                       <div className="text-fg">{it.type}</div>
                       <div className="text-xs text-fg-muted">{it.manufacturer ?? '—'} {it.model ?? ''}</div>
@@ -157,6 +160,9 @@ export default async function EstoquePage({ searchParams }: { searchParams: SP }
                     </td>
                     <td className="px-4 py-3 text-xs text-fg-muted">
                       {it.camera ? `📷 ${it.camera.name}` : it.sensor ? `📡 ${it.sensor.name}` : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      <WarrantyIndicator warrantyExpiresAt={it.warrantyExpiresAt} />
                     </td>
                     <td className="px-4 py-3 text-right">
                       <InventoryRowActions
@@ -203,4 +209,12 @@ function statusTone(s: string): 'brand' | 'accent' | 'muted' | 'danger' {
   if (s === 'disponivel') return 'accent';
   if (s === 'manutencao') return 'danger';
   return 'muted';
+}
+
+function WarrantyIndicator({ warrantyExpiresAt }: { warrantyExpiresAt: Date | null }) {
+  if (!warrantyExpiresAt) return <span className="text-fg-muted">—</span>;
+  const diffDays = Math.ceil((new Date(warrantyExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return <Badge tone="danger">vencida</Badge>;
+  if (diffDays <= 30) return <Badge tone="danger">vence em {diffDays}d</Badge>;
+  return <span className="text-fg-muted">{new Date(warrantyExpiresAt).toLocaleDateString('pt-BR')}</span>;
 }

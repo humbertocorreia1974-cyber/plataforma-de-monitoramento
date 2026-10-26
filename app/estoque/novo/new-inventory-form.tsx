@@ -13,6 +13,7 @@ export default function NewInventoryForm({ clients, sites }: { clients: Client[]
   const [form, setForm] = useState({
     serialNumber: '', type: 'camera', manufacturer: '', model: '',
     status: 'disponivel', ownership: 'comodato', clientId: '', siteId: '', notes: '',
+    purchaseDate: '', purchaseCost: '', warrantyExpiresAt: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -91,6 +92,18 @@ export default function NewInventoryForm({ clients, sites }: { clients: Client[]
           <option value="">—</option>
           {sitesOfClient.map((s) => <option key={s.id} value={s.id}>{s.name}{s.code ? ` (${s.code})` : ''}</option>)}
         </select>
+      </label>
+      <label className="text-xs text-fg-muted">
+        Data da compra
+        <Input type="date" value={form.purchaseDate} onChange={(e) => setForm({ ...form, purchaseDate: e.target.value })} className="mt-1" />
+      </label>
+      <label className="text-xs text-fg-muted">
+        Custo da compra (R$)
+        <Input type="number" step="0.01" min="0" value={form.purchaseCost} onChange={(e) => setForm({ ...form, purchaseCost: e.target.value })} className="mt-1" placeholder="0,00" />
+      </label>
+      <label className="text-xs text-fg-muted">
+        Garantia até
+        <Input type="date" value={form.warrantyExpiresAt} onChange={(e) => setForm({ ...form, warrantyExpiresAt: e.target.value })} className="mt-1" />
       </label>
       <label className="text-xs text-fg-muted sm:col-span-2">
         Observações
