@@ -21,12 +21,12 @@ export default function CookieConsent() {
   if (!visible) return null;
 
   return (
-    <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50, background: '#111827', color: '#fff', padding: '1rem 1.25rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+    <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50, background: 'hsl(var(--fg))', color: 'hsl(var(--bg))', padding: '1rem 1.25rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}>
       <p style={{ margin: 0, fontSize: '0.875rem', maxWidth: 640 }}>
         Usamos cookies essenciais para o funcionamento do app. Ao continuar navegando, você concorda com nossa{' '}
         <Link href="/privacidade" style={{ textDecoration: 'underline' }}>Política de Privacidade</Link>.
       </p>
-      <button onClick={accept} style={{ padding: '0.5rem 1.25rem', borderRadius: 8, border: 0, background: '#fff', color: '#111827', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+      <button onClick={accept} style={{ padding: '0.5rem 1.25rem', borderRadius: 8, border: 0, background: 'hsl(var(--bg))', color: 'hsl(var(--fg))', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
         Entendi
       </button>
     </div>

@@ -27,7 +27,7 @@ export default function RootLayout({
         <Providers><AppNav />{children}</Providers>
               <JgnextAssistant />
         <CookieConsent />
-              <a href="https://www.jgnext.com" target="_blank" rel="noopener" className="fixed bottom-16 right-2 z-40 rounded-full bg-black/80 px-3 py-1 text-[11px] text-white/80 backdrop-blur hover:text-white transition-colors">Feito com JGNEXT</a>
+              <a href="https://www.jgnext.com" target="_blank" rel="noopener" className="fixed bottom-2 left-2 z-40 rounded-full bg-black/80 px-3 py-1 text-[11px] text-white/80 backdrop-blur hover:text-white transition-colors">Feito com JGNEXT</a>
       </body>
     </html>
   );
