@@ -52,10 +52,10 @@ export default function RegisterPage() {
         </Link>
         <div className="relative">
           <h2 className="max-w-sm text-3xl font-semibold leading-tight tracking-tight">
-            Comece agora — leva menos de um minuto.
+            Monitoramento e resposta a incidentes, num só painel.
           </h2>
           <p className="mt-3 max-w-sm text-brand-fg/75">
-            Crie sua conta e tenha tudo num só lugar.
+            Crie sua conta e comece a acompanhar sites, câmeras e ordens de serviço.
           </p>
         </div>
         <p className="relative text-sm text-brand-fg/60">© {new Date().getFullYear()}</p>

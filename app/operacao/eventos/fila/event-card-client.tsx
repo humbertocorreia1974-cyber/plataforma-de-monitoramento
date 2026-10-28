@@ -88,7 +88,7 @@ export function EventCardClient({ ev }: { ev: Ev }) {
 
   const statusTone =
     ev.status === "escalado"
-      ? "bg-accent/10 text-accent"
+      ? "bg-danger/10 text-danger"
       : ev.status === "descartado"
       ? "bg-fg-muted/10 text-fg-muted"
       : ev.status === "classificado"

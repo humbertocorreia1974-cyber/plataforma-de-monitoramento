@@ -16,6 +16,12 @@
   --brand-fg: 0 0% 100%;
   --accent: 199 89% 48%;
   --accent-fg: 0 0% 100%;
+  --danger: 0 84% 48%;
+  --danger-fg: 0 0% 100%;
+  --warning: 32 95% 44%;
+  --warning-fg: 0 0% 100%;
+  --success: 142 71% 35%;
+  --success-fg: 0 0% 100%;
   --radius: 0.7rem;
 }
 

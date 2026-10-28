@@ -24,6 +24,18 @@ const config: Config = {
           DEFAULT: "hsl(var(--accent) / <alpha-value>)",
           fg: "hsl(var(--accent-fg) / <alpha-value>)",
         },
+        danger: {
+          DEFAULT: "hsl(var(--danger) / <alpha-value>)",
+          fg: "hsl(var(--danger-fg) / <alpha-value>)",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning) / <alpha-value>)",
+          fg: "hsl(var(--warning-fg) / <alpha-value>)",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success) / <alpha-value>)",
+          fg: "hsl(var(--success-fg) / <alpha-value>)",
+        },
         "surface-2": "hsl(var(--surface-2) / <alpha-value>)",
       },
       fontFamily: {

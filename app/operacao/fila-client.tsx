@@ -21,6 +21,13 @@ export type EventoFila = {
   classification: string | null;
 };
 
+function statusTone(status: string) {
+  if (status === 'escalado') return 'bg-danger/90 text-danger-fg';
+  if (status === 'descartado') return 'bg-fg-muted/80 text-white';
+  if (status === 'classificado') return 'bg-brand/90 text-brand-fg';
+  return 'bg-black/60 text-white';
+}
+
 export function FilaClient({
   sites,
   initialEvents,
@@ -136,7 +143,7 @@ export function FilaClient({
                       Sem snapshot
                     </div>
                   )}
-                  <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
+                  <span className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${statusTone(ev.status)}`}>
                     {ev.status.replace('_', ' ')}
                   </span>
                   {typeof ev.aiConfidence === 'number' && (

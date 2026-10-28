@@ -43,6 +43,13 @@ function fmt(dt: string) {
   }
 }
 
+function statusTone(status: string) {
+  if (status === 'escalado') return 'bg-danger/10 text-danger';
+  if (status === 'descartado') return 'bg-fg-muted/10 text-fg-muted';
+  if (status === 'classificado') return 'bg-brand/10 text-brand';
+  return 'bg-brand/5 text-brand';
+}
+
 export function EventQueueClient({
   initialEvents,
   sites,
@@ -182,7 +189,7 @@ export function EventQueueClient({
                         <span className="text-sm font-medium text-fg">
                           {e.camera?.name ?? 'Sensor'} · {e.site.name}
                         </span>
-                        <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-brand">
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${statusTone(e.status)}`}>
                           {e.status}
                         </span>
                       </div>

@@ -41,10 +41,10 @@ export default function LoginPage() {
         </Link>
         <div className="relative">
           <h2 className="max-w-sm text-3xl font-semibold leading-tight tracking-tight">
-            Bem-vindo de volta.
+            A operação não para. O acesso também não deveria.
           </h2>
           <p className="mt-3 max-w-sm text-brand-fg/75">
-            Entre para continuar de onde parou.
+            Entre para ver a fila de eventos, câmeras e incidentes em tempo real.
           </p>
         </div>
         <p className="relative text-sm text-brand-fg/60">© {new Date().getFullYear()}</p>
