@@ -21,12 +21,12 @@ export const metadata = {
 
 function badge(status: string) {
   const map: Record<string, string> = {
-    online: "bg-brand/10 text-brand",
-    degradada: "bg-accent/10 text-accent",
-    offline: "bg-red-500/10 text-red-500",
-    ok: "bg-brand/10 text-brand",
-    warn: "bg-accent/10 text-accent",
-    fail: "bg-red-500/10 text-red-500",
+    online: "bg-success/10 text-success",
+    ok: "bg-success/10 text-success",
+    degradada: "bg-warning/10 text-warning",
+    warn: "bg-warning/10 text-warning",
+    offline: "bg-danger/10 text-danger",
+    fail: "bg-danger/10 text-danger",
     unknown: "bg-fg-muted/10 text-fg-muted",
   };
   return map[status] ?? "bg-fg-muted/10 text-fg-muted";
@@ -62,6 +62,7 @@ export default async function CameraHealthPage({
   });
 
   const canRun = role === "admin" || role === "operador";
+  const hasUrl = Boolean(camera.rtspUrl || camera.onvifUrl);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -91,6 +92,17 @@ export default async function CameraHealthPage({
           </Link>
         </div>
       </div>
+
+      {!hasUrl && (
+        <Card className="mb-6 border-danger/30">
+          <CardBody>
+            <p className="text-sm text-danger">
+              Esta câmera não tem URL RTSP nem ONVIF configurada — a checagem de saúde nunca vai conseguir
+              conectar de verdade. Recadastre a câmera com a URL correta.
+            </p>
+          </CardBody>
+        </Card>
+      )}
 
       <Card className="mb-6">
         <CardBody className="flex flex-wrap items-center justify-between gap-3">

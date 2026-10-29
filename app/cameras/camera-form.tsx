@@ -25,6 +25,8 @@ export function CameraFormClient({ sites }: { sites: SiteOpt[] }) {
       manufacturer: String(fd.get('manufacturer') || '').trim() || null,
       model: String(fd.get('model') || '').trim() || null,
       serialNumber: String(fd.get('serialNumber') || '').trim() || null,
+      rtspUrl: String(fd.get('rtspUrl') || '').trim() || null,
+      onvifUrl: String(fd.get('onvifUrl') || '').trim() || null,
     };
     const res = await fetch('/api/cameras', {
       method: 'POST',
@@ -71,6 +73,17 @@ export function CameraFormClient({ sites }: { sites: SiteOpt[] }) {
           Nome da câmera *
           <Input name="name" required className="mt-1" placeholder="Ex: Entrada principal" />
         </label>
+        <label className="text-xs text-fg-muted sm:col-span-2">
+          URL RTSP
+          <Input name="rtspUrl" className="mt-1" placeholder="rtsp://usuario:senha@192.168.0.10:554/stream1" />
+        </label>
+        <label className="text-xs text-fg-muted sm:col-span-2">
+          URL ONVIF
+          <Input name="onvifUrl" className="mt-1" placeholder="http://192.168.0.10:80/onvif/device_service" />
+        </label>
+        <p className="-mt-2 text-xs text-fg-muted sm:col-span-2">
+          Sem pelo menos uma dessas URLs a câmera fica sem conexão real — o teste de saúde não tem o que verificar.
+        </p>
         <label className="text-xs text-fg-muted">
           Código interno
           <Input name="code" className="mt-1" placeholder="Ex: CAM-001" />

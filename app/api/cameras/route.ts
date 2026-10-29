@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   if (!['admin', 'operador'].includes(role)) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
 
   const body = await request.json().catch(() => ({}));
-  const { siteId, name, code, manufacturer, model, serialNumber } = body ?? {};
+  const { siteId, name, code, manufacturer, model, serialNumber, rtspUrl, onvifUrl } = body ?? {};
   if (!siteId || !name || !String(name).trim()) {
     return NextResponse.json({ error: 'siteId e name são obrigatórios' }, { status: 400 });
   }
@@ -38,7 +38,10 @@ export async function POST(request: Request) {
       manufacturer: manufacturer || null,
       model: model || null,
       serialNumber: serialNumber || null,
-      status: 'online',
+      rtspUrl: rtspUrl || null,
+      onvifUrl: onvifUrl || null,
+      // 'offline' até o primeiro health-check real confirmar conexão — nunca assumir 'online' sem checar.
+      status: 'offline',
       healthStatus: 'unknown',
     },
   });

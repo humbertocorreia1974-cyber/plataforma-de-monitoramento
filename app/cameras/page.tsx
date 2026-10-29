@@ -13,11 +13,32 @@ export const metadata = {
   description: 'Cadastro de câmeras por site, com status e saúde de conexão.',
 };
 
+const STATUS_LABEL: Record<string, string> = {
+  online: 'Online',
+  offline: 'Offline',
+  degradada: 'Degradada',
+  manutencao: 'Manutenção',
+};
+
+const STATUS_TONE: Record<string, string> = {
+  online: 'bg-success/10 text-success',
+  offline: 'bg-danger/10 text-danger',
+  degradada: 'bg-warning/10 text-warning',
+  manutencao: 'bg-fg-muted/10 text-fg-muted',
+};
+
 const HEALTH_LABEL: Record<string, string> = {
   unknown: 'Nunca verificada',
   ok: 'OK',
   warn: 'Atenção',
   fail: 'Falha',
+};
+
+const HEALTH_TONE: Record<string, string> = {
+  unknown: 'text-fg-muted',
+  ok: 'text-success',
+  warn: 'text-warning',
+  fail: 'text-danger',
 };
 
 export default async function CamerasPage() {
@@ -86,8 +107,8 @@ export default async function CamerasPage() {
                 <CardBody>
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle>{c.name}</CardTitle>
-                    <span className="rounded-full border border-border px-2 py-0.5 text-xs text-fg-muted">
-                      {c.status}
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_TONE[c.status] ?? 'bg-fg-muted/10 text-fg-muted'}`}>
+                      {STATUS_LABEL[c.status] ?? c.status}
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-fg-muted">
@@ -96,9 +117,12 @@ export default async function CamerasPage() {
                   <p className="mt-1 text-sm text-fg-muted">
                     {c.manufacturer || 'Fabricante não informado'} {c.model || ''}
                   </p>
+                  {!c.rtspUrl && !c.onvifUrl && (
+                    <p className="mt-1 text-xs text-danger">Sem URL RTSP/ONVIF configurada — não é possível conectar.</p>
+                  )}
                   <Link
                     href={`/cameras/${c.id}/health`}
-                    className="mt-3 inline-block text-sm text-brand hover:underline"
+                    className={`mt-3 inline-block text-sm hover:underline ${HEALTH_TONE[c.healthStatus] ?? 'text-fg-muted'}`}
                   >
                     Saúde da conexão: {HEALTH_LABEL[c.healthStatus] ?? c.healthStatus} →
                   </Link>
