@@ -5,9 +5,7 @@ export const dynamic = 'force-dynamic';
 
 // Mapa recurso-da-URL -> acessor Prisma (gerado do schema).
 const RESOURCES: Record<string, string> = {
-  "user": "user",
   "project": "project",
-  "password-reset-token": "passwordResetToken",
   "client": "client",
   "site": "site",
   "site-operator": "siteOperator",
