@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { allowedSiteIds } from '@/lib/rbac';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,12 @@ export async function GET() {
   const role = (session.user as { role?: string }).role ?? 'user';
   if (!['admin', 'operador'].includes(role)) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
 
-  const sites = await prisma.site.findMany({ orderBy: { name: 'asc' }, include: { client: true } });
+  const allowed = await allowedSiteIds(session.user.id as string, role as any);
+  const sites = await prisma.site.findMany({
+    where: allowed === 'all' ? {} : { id: { in: allowed } },
+    orderBy: { name: 'asc' },
+    include: { client: true },
+  });
   return NextResponse.json({ sites });
 }
 
