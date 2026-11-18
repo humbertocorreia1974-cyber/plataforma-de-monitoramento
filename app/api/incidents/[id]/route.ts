@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { allowedSiteIds, siteAllowed } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,8 @@ export async function PATCH(
 
   const existing = await prisma.incident.findUnique({ where: { id } });
   if (!existing) return NextResponse.json({ error: "Incidente não encontrado" }, { status: 404 });
+  const incAllowed = await allowedSiteIds(session.user.id, role as any);
+  if (!siteAllowed(incAllowed, existing.siteId)) return NextResponse.json({ error: "Sem acesso a este incidente" }, { status: 403 });
 
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
   const userAgent = request.headers.get("user-agent") ?? null;

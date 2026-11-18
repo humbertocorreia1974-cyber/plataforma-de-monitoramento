@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { allowedSiteIds, siteAllowed } from '@/lib/rbac';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { id } = await params;
   const item = await prisma.inventoryItem.findUnique({ where: { id } });
   if (!item) return NextResponse.json({ error: 'Equipamento não encontrado' }, { status: 404 });
+  const itemAllowed = await allowedSiteIds(session.user.id as string, role as any);
+  if (!(itemAllowed === 'all' || siteAllowed(itemAllowed, item.siteId))) return NextResponse.json({ error: 'Sem acesso a este equipamento' }, { status: 403 });
 
   const body = await request.json();
   const { description, cost, performedAt } = body ?? {};

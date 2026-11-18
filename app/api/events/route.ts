@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { allowedSiteIds, getSessionRole, jsonError, jsonOk, requireSession } from "@/lib/rbac";
+import { allowedSiteIds, getSessionRole, jsonError, jsonOk, requireSession, siteAllowed } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
@@ -25,8 +25,12 @@ export async function GET(req: NextRequest) {
     const to = url.searchParams.get("to");
 
     const where: any = {};
-    if (allowed !== "all") where.siteId = { in: allowed };
-    if (siteId) where.siteId = siteId;
+    if (siteId) {
+      if (!siteAllowed(allowed, siteId)) return jsonOk({ events: [] });
+      where.siteId = siteId;
+    } else if (allowed !== "all") {
+      where.siteId = { in: allowed };
+    }
     if (cameraId) where.cameraId = cameraId;
     if (status) where.status = status;
     if (from || to) {

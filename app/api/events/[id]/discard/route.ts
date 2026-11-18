@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { allowedSiteIds, siteAllowed } from '@/lib/rbac';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,10 @@ export async function POST(
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
   }
+  const discardRole = (session.user as { role?: string }).role ?? 'user';
+  if (!['admin', 'operador'].includes(discardRole)) {
+    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
+  }
   const { id } = await params;
   const body = await request.json().catch(() => ({}));
   const reason = String(body.reason ?? '').trim();
@@ -22,6 +27,8 @@ export async function POST(
 
   const ev = await prisma.event.findUnique({ where: { id } });
   if (!ev) return NextResponse.json({ error: 'Evento não encontrado' }, { status: 404 });
+  const discardAllowed = await allowedSiteIds(session.user.id as string, discardRole as any);
+  if (!siteAllowed(discardAllowed, ev.siteId)) return NextResponse.json({ error: 'Sem acesso a este evento' }, { status: 403 });
 
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
   const userAgent = request.headers.get('user-agent') ?? null;

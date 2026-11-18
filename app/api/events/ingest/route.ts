@@ -3,17 +3,32 @@ import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { audit, jsonError, jsonOk } from "@/lib/rbac";
+import { audit, jsonError, jsonOk, allowedSiteIds, siteAllowed } from "@/lib/rbac";
+import { timingSafeEqual } from "crypto";
 import { notifyRole } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
+// CodeProject.AI devolve rótulos em inglês; o app trabalha com pessoa | veiculo | objeto | desconhecido.
+function mapLabel(l: unknown): string {
+  const s = String(l ?? "").toLowerCase();
+  if (s === "person" || s === "pessoa") return "pessoa";
+  if (["car", "truck", "bus", "motorcycle", "bicycle", "vehicle", "veiculo"].includes(s)) return "veiculo";
+  return s ? "objeto" : "desconhecido";
+}
+
 // Gateway leve do cliente: envia snapshot + motionScore.
 // Roda CodeProject.AI (POST /v1/vision/detection) e cria Event + AuditLog.
 export async function POST(req: NextRequest) {
-  const __session = await getServerSession(authOptions as any);
-  if (!(__session as any)?.user) {
-    return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+  // Gateway local autentica por chave (Authorization: Bearer CAMERA_GATEWAY_TOKEN); operador/admin logado também pode enviar.
+  const gwKey = process.env.CAMERA_GATEWAY_TOKEN;
+  const sentKey = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  const viaGateway = !!gwKey && !!sentKey && sentKey.length === gwKey.length && timingSafeEqual(Buffer.from(sentKey), Buffer.from(gwKey));
+  const __session = viaGateway ? null : await getServerSession(authOptions as any);
+  const __user: any = (__session as any)?.user;
+  if (!viaGateway) {
+    if (!__user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+    if (!["admin", "operador"].includes(__user.role)) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
   }
 
   try {
@@ -23,6 +38,11 @@ export async function POST(req: NextRequest) {
 
     const camera = await prisma.camera.findUnique({ where: { id: cameraId } });
     if (!camera) return jsonError("câmera não encontrada", 404);
+    if (camera.siteId !== siteId) return jsonError("câmera não pertence ao site informado", 400);
+    if (!viaGateway) {
+      const allowedIngest = await allowedSiteIds(__user.id, __user.role);
+      if (!siteAllowed(allowedIngest, camera.siteId)) return jsonError("sem acesso ao site", 403);
+    }
 
     // Pré-filtro: só processa se houver movimento real
     if (typeof motionScore === "number" && motionScore < 0.02) {
@@ -45,7 +65,7 @@ export async function POST(req: NextRequest) {
         aiRaw = aiData;
         const pred = aiData?.predictions?.[0];
         if (pred) {
-          aiLabel = pred.label ?? "desconhecido";
+          aiLabel = mapLabel(pred.label);
           aiConfidence = pred.confidence ?? null;
         }
       } catch (e) {
@@ -59,7 +79,7 @@ export async function POST(req: NextRequest) {
         cameraId,
         occurredAt: occurredAt ? new Date(occurredAt) : new Date(),
         motionScore: typeof motionScore === "number" ? motionScore : null,
-        snapshotUrl: snapshotBase64 ? `data:image/jpeg;base64,${snapshotBase64.slice(0, 64)}...` : null,
+        snapshotUrl: typeof snapshotBase64 === "string" && snapshotBase64.length <= 700000 ? "data:image/jpeg;base64," + snapshotBase64 : null,
         aiLabel,
         aiConfidence,
         aiRaw: aiRaw ?? undefined,

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,17 @@ export async function GET(request: Request) {
 // Mensagem recebida (Instagram/Facebook DM) -> encaminha pro cérebro
 // unificado do Assistente JGNEXT (mesmo endpoint do chat embutido/WhatsApp).
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => null);
+  const raw = await request.text();
+  const appSecret = process.env.META_APP_SECRET;
+  // Sem META_APP_SECRET configurado, o webhook ignora tudo (fecha por padrão).
+  if (!appSecret) return NextResponse.json({ received: true });
+  const sig = request.headers.get('x-hub-signature-256') || '';
+  const expected = 'sha256=' + createHmac('sha256', appSecret).update(raw).digest('hex');
+  if (sig.length !== expected.length || !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
+    return NextResponse.json({ error: 'assinatura inválida' }, { status: 401 });
+  }
+  let body: any = null;
+  try { body = JSON.parse(raw); } catch { body = null; }
   const base = process.env.JGNEXT_API_BASE_URL;
   const token = process.env.JGNEXT_CHATBOT_TOKEN;
   if (!base || !token || !body) return NextResponse.json({ received: true });

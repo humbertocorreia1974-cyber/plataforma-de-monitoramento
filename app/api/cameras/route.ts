@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { allowedSiteIds, siteAllowed, maskCredentials, validCameraUrl } from '@/lib/rbac';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,8 +12,14 @@ export async function GET() {
   const role = (session.user as { role?: string }).role ?? 'user';
   if (!['admin', 'operador'].includes(role)) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
 
-  const cameras = await prisma.camera.findMany({ orderBy: { name: 'asc' }, include: { site: true } });
-  return NextResponse.json({ cameras });
+  const allowed = await allowedSiteIds(session.user.id as string, role as any);
+  const cameras = await prisma.camera.findMany({
+    where: allowed === 'all' ? {} : { siteId: { in: allowed } },
+    orderBy: { name: 'asc' },
+    include: { site: true },
+  });
+  const safe = cameras.map((c) => ({ ...c, rtspUrl: maskCredentials(c.rtspUrl), onvifUrl: maskCredentials(c.onvifUrl) }));
+  return NextResponse.json({ cameras: safe });
 }
 
 export async function POST(request: Request) {
@@ -26,6 +33,13 @@ export async function POST(request: Request) {
   if (!siteId || !name || !String(name).trim()) {
     return NextResponse.json({ error: 'siteId e name são obrigatórios' }, { status: 400 });
   }
+  if (String(name).length > 120) return NextResponse.json({ error: 'Nome muito longo' }, { status: 400 });
+  if (!validCameraUrl(rtspUrl) || !validCameraUrl(onvifUrl)) {
+    return NextResponse.json({ error: 'URL da câmera inválida (use rtsp://, rtsps://, http:// ou https://)' }, { status: 400 });
+  }
+
+  const allowed = await allowedSiteIds(session.user.id as string, role as any);
+  if (!siteAllowed(allowed, String(siteId))) return NextResponse.json({ error: 'Sem acesso a este site' }, { status: 403 });
 
   const site = await prisma.site.findUnique({ where: { id: siteId } });
   if (!site) return NextResponse.json({ error: 'Site não encontrado' }, { status: 404 });
@@ -53,9 +67,9 @@ export async function POST(request: Request) {
       action: 'create',
       entityType: 'Camera',
       entityId: created.id,
-      after: created as any,
+      after: { id: created.id, siteId, name: created.name } as any,
     },
   }).catch(() => {});
 
-  return NextResponse.json({ camera: created }, { status: 201 });
+  return NextResponse.json({ camera: { ...created, rtspUrl: maskCredentials(created.rtspUrl), onvifUrl: maskCredentials(created.onvifUrl) } }, { status: 201 });
 }

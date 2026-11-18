@@ -81,7 +81,7 @@ export default function RegisterPage() {
             </div>
             <div>
               <label htmlFor="password" className="mb-1.5 block text-sm font-medium">Senha</label>
-              <Input id="password" type="password" required minLength={8} placeholder="Mínimo 6 caracteres" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Input id="password" type="password" required minLength={10} placeholder="Mínimo 10 caracteres, com letras e números" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             {error && (
               <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-500">{error}</p>

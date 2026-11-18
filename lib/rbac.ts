@@ -97,3 +97,28 @@ export async function audit(params: {
     console.error("audit failed", e);
   }
 }
+
+export function siteAllowed(allowed: string[] | "all", siteId: string | null | undefined): boolean {
+  if (!siteId) return false;
+  return allowed === "all" || allowed.includes(siteId);
+}
+
+// Esconde a senha de URLs do tipo rtsp://usuario:senha@host (nunca devolver credencial de câmera pela API).
+export function maskCredentials(url: string | null | undefined): string | null {
+  if (!url) return null;
+  return String(url).replace(/(\/\/[^\/:@\s]+):[^@\/\s]*@/, "$1:***@");
+}
+
+export function validCameraUrl(url: unknown): boolean {
+  if (url == null || url === "") return true;
+  try {
+    const u = new URL(String(url));
+    return ["rtsp:", "rtsps:", "http:", "https:"].includes(u.protocol);
+  } catch {
+    return false;
+  }
+}
+
+export function isStrongPassword(pw: unknown): boolean {
+  return typeof pw === "string" && pw.length >= 10 && pw.length <= 128 && /[A-Za-z]/.test(pw) && /[0-9]/.test(pw);
+}

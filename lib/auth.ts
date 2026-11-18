@@ -16,12 +16,18 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+        const email = String(credentials.email).trim().toLowerCase();
+        // Bloqueio contra força bruta: 5 falhas em 15 min para o mesmo email.
+        const failures = await prisma.auditLog.count({
+          where: { action: "login_failed", entityType: "User", entityId: email, createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) } },
         });
-        if (!user) return null;
-        const ok = await bcrypt.compare(credentials.password, user.passwordHash);
-        if (!ok) return null;
+        if (failures >= 5) return null;
+        const user = await prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } } });
+        const ok = user ? await bcrypt.compare(String(credentials.password), user.passwordHash) : false;
+        if (!user || !ok) {
+          await prisma.auditLog.create({ data: { action: "login_failed", entityType: "User", entityId: email } }).catch(() => {});
+          return null;
+        }
         return { id: user.id, name: user.name ?? undefined, email: user.email , role: (user as any).role, clientId: (user as any).clientId };
       },
     }),

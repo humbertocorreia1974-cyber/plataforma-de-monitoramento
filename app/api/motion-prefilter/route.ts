@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { allowedSiteIds, siteAllowed } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,9 @@ export async function GET() {
     return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
   }
 
+  const allowedGet = await allowedSiteIds((session.user as any).id as string, role as any);
   const rules = await prisma.detectionRule.findMany({
+    where: allowedGet === "all" ? {} : { camera: { siteId: { in: allowedGet } } },
     include: { camera: { select: { id: true, name: true, siteId: true } } },
     orderBy: { updatedAt: "desc" },
     take: 100,
@@ -51,6 +54,10 @@ export async function POST(request: Request) {
   const camera = await prisma.camera.findUnique({ where: { id: cameraId } });
   if (!camera) {
     return NextResponse.json({ error: "Câmera não encontrada" }, { status: 404 });
+  }
+  const allowedPost = await allowedSiteIds((session.user as any).id as string, role as any);
+  if (!siteAllowed(allowedPost, camera.siteId)) {
+    return NextResponse.json({ error: "Sem acesso a esta câmera" }, { status: 403 });
   }
 
   const existing = await prisma.detectionRule.findFirst({
