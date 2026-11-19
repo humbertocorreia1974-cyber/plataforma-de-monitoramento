@@ -74,7 +74,7 @@ export default function Home() {
         <div className="relative overflow-hidden rounded-2xl border border-border bg-surface/60 px-8 py-14 text-center backdrop-blur">
           <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(30rem_20rem_at_50%_0%,hsl(var(--brand)/0.18),transparent_70%)]" />
           <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Comece agora</h2>
-          <p className="mx-auto mt-2 max-w-md text-fg-muted">Monitore as câmeras que você já tem com IA: a plataforma filtra o movimento, guarda a imagem do evento e leva tudo para uma central de operação, com classificação, escalada para incidente e histórico de quem fez o quê.</p>
+          <p className="mx-auto mt-2 max-w-md text-fg-muted">Crie sua conta e comece a organizar câmeras, sites e incidentes em um só painel.</p>
           <Link href="/register" className="mt-6 inline-flex rounded-lg bg-brand px-6 py-3 font-medium text-brand-fg transition-opacity hover:opacity-90">Começar agora</Link>
         </div>
       </section>
