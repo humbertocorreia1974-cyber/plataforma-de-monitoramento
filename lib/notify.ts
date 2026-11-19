@@ -49,3 +49,8 @@ export async function notifyRole(role: string, params: Omit<Parameters<typeof no
   const users = await prisma.user.findMany({ where: { role }, select: { id: true } });
   await Promise.all(users.map((u) => notifyUser({ ...params, userId: u.id })));
 }
+
+export async function notifySiteOperators(siteId: string, params: Omit<Parameters<typeof notifyUser>[0], "userId">) {
+  const rows = await prisma.siteOperator.findMany({ where: { siteId }, select: { userId: true } });
+  await Promise.all(rows.map((r) => notifyUser({ ...params, userId: r.userId })));
+}

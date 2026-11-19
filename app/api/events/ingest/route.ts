@@ -5,7 +5,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { audit, jsonError, jsonOk, allowedSiteIds, siteAllowed } from "@/lib/rbac";
 import { timingSafeEqual } from "crypto";
-import { notifyRole } from "@/lib/notify";
+import { notifySiteOperators } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (aiLabel && (aiLabel === "pessoa" || aiLabel === "veiculo")) {
-      await notifyRole("operador", {
+      await notifySiteOperators(camera.siteId, {
         type: "evento_critico",
         title: `Evento ${aiLabel} detectado`,
         message: `Câmera ${camera.name} registrou ${aiLabel} com confiança ${(aiConfidence ?? 0).toFixed(2)}.`,
